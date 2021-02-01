@@ -1,5 +1,5 @@
 ---
-title: "DADA2 workflow"
+title: "All_anole DADA2 workflow"
 output: github_document
 ---
 
@@ -20,7 +20,7 @@ library(dada2); packageVersion("dada2")
 
 ``` {r, echo = T, eval = T}
 #set the path to our paired end files
-path <- "~/R/urbananoles/AnoleSeqs"
+path <- "~/R/urbananoles/Allanoleseqs"
 list.files(path)
 
 #read in the forward and reverse seqs
@@ -33,10 +33,10 @@ fnRs <- sort(list.files(path, pattern = "_R2_001.fastq", full.names = TRUE))
 sample.names <- sapply(strsplit(basename(fnFs), "_"), "[", 1)
 
 # Look at the quality profiles of the forward reads
-plotQualityProfile(fnFs[1:19])
+plotQualityProfile(fnFs[1:5])
 
 # Look at the quality profiles of the Reverse reads
-plotQualityProfile(fnRs[1:19])
+plotQualityProfile(fnRs[1:5])
 ```
 
 
@@ -54,12 +54,12 @@ names(filtRs) <- sample.names
 
 out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(240,160),
               maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
-              compress=TRUE, multithread=FALSE) # On Windows set multithread=FALSE
+              compress=TRUE, multithread=FALSE) # On Windows set multithread=FALSE (this might be a lie. I have multiple threads. very thready.)
 
 head(out)
 
 
-# Learn the error rates. These will take like 10 mins to run with this data.
+# Learn the error rates. These will take like 10 mins to run maybe... Or it'll take like way longer who really knows.
 
 errF <- learnErrors(filtFs, multithread=TRUE)
 errR <- learnErrors(filtRs, multithread=TRUE)
@@ -123,17 +123,18 @@ library(dbplyr)
 # mMake the Metadata file. NEEDS TO BE A REAL DATA.FRAME NOT A TIBBLE. Need to figure out how to import as a dataframe its probably easier than what I did below.
 
 sample.out <- rownames(seqtab.nochim)
-Title <- c("Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal","Anole_Fecal")
-loc_name <- c("Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban")
-env_biome <- c("Natural","Natural","Natural","Natural","Natural","Natural","Natural","Natural","Natural","Urban","Urban","Urban","Urban","Urban","Urban","Urban","Urban","Urban","Urban")
-sample <- c("AF104", "AF105", "AF106", "AF107", "AF108", "AF109", "AF110", "AF111", "AF112", "AF113", "AF114", "AF115", "AF116", "AF117", "AF118", "AF119", "AF120", "AF121", "AF122")
-Mayaguez <- data.frame(title = Title, Loc_name = loc_name, Env_biome = env_biome, Sample = sample)
-rownames(Mayaguez) <- samples.out
+
+loc_name <- c("Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_forest","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Mayaguez_urban","Aguadilla_Forest","Aguadilla_Forest","Aguadilla_Forest","Aguadilla_Forest","Aguadilla_Forest","Aguadilla_Forest","Aguadilla_Forest","Aguadilla_Forest","Aguadilla_Forest","Aguadilla_Forest","Aguadilla_urban","Aguadilla_urban","Aguadilla_urban","Aguadilla_urban","Aguadilla_urban","Aguadilla_urban","Aguadilla_urban","Aguadilla_urban","Aguadilla_urban","Aguadilla_urban","Mayaguez_forest","Mayaguez_forest")
+env_biome <- c("Natural","Natural","Natural","Natural","Natural","Natural","Natural","Natural","Urban","Urban","Urban","Urban","Urban","Urban","Urban","Urban","Urban","Urban","Natural","Natural","Natural","Natural","Natural","Natural","Natural","Natural","Natural","Natural","Urban","Urban","Urban","Urban","Urban","Urban","Urban","Urban","Urban","Urban","Natural","Natural")
+sample <- c("AF104", "AF105", "AF106", "AF108", "AF109", "AF110", "AF111", "AF112", "AF113", "AF114", "AF115", "AF116", "AF117", "AF118", "AF119", "AF120", "AF121", "AF122","AF123", "AF124", "AF125", "AF126", "AF127", "AF128", "AF129", "AF130", "AF131", "AF132", "AF133", "AF134", "AF135", "AF136", "AF137", "AF138", "AF139", "AF140", "AF141", "AF142", "AF143", "AF144")
+Allanole <- data.frame(Loc_name = loc_name, Env_biome = env_biome, Sample = sample)
+rownames(Allanole) <- sample.out
+
 
 # Make the actual phyloseq object!
 
-ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows = FALSE), sample_data(Mayaguez), tax_table(taxa))
-Mayaguez
+ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows = FALSE), sample_data(Allanole), tax_table(taxa))
+Allanole
 
 # convert sequences into asv names and then add the sequences to another subfield. the summarize our phyloseq object.
 dna <- Biostrings::DNAStringSet(taxa_names(ps))
@@ -148,7 +149,7 @@ ps
 
 #some quick plots
 
-plot_richness(ps, x="Loc_name", measures=c("Shannon", "Simpson"), color="Env_biome")
+plot_richness(ps, x="Loc_name", measures=c("Shannon", "Simpson", "Fisher"), color="Env_biome")
 
 # ordinate
 ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))

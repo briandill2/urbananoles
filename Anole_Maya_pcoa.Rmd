@@ -72,8 +72,8 @@ psrare <- rarefy_even_depth(psfilter, rngseed = 8675309, sample.size = 10000, ve
 ps_dist_jacc <- phyloseq::distance(psrare, method = "jaccard", normalized = TRUE, binary = TRUE)
 ps_dist_bray <- phyloseq::distance(psrare, method = "bray")
 
-ps_ord_jacc <- ordinate(ps, "PCoA", distance = ps_dist_jacc)
-ps_ord_bray <- ordinate(ps, "PCoA", distance = ps_dist_bray)
+ps_ord_jacc <- ordinate(psrare, "PCoA", distance = ps_dist_jacc)
+ps_ord_bray <- ordinate(psrare, "PCoA", distance = ps_dist_bray)
 
 plot_scree(ps_ord_jacc)
 plot_scree(ps_ord_bray)

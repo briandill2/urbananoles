@@ -1,5 +1,5 @@
 ---
-title: "Anoles"
+title: "All Anoles"
 output: github_document
 ---
 
@@ -52,7 +52,7 @@ Sample_color_pal <- c("#1c78e8","#1c78e8","#1c78e8","#1c78e8","#1c78e8","#1c78e8
 names(Sample_color_pal) <- c("AF104", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban")
 
 Sample_color_pal <- c("#1c78e8","#ebcd09")
-names(Sample_color_pal) <- c("Mayaguez_forest","Mayaguez_urban")
+names(Sample_color_pal) <- c("Natural","Urban")
 Sample_color_pal
 ```
 
@@ -61,7 +61,7 @@ Sample_color_pal
 
 
 # Rarefy
-psrare <- rarefy_even_depth(psfilter, rngseed = 8675309, sample.size = 10000, verbose = FALSE)
+psrare <- rarefy_even_depth(ps, rngseed = 8675309, sample.size = 10000, verbose = FALSE)
 
 
 # if you want to remove certain sample or taxa from the dataset, you can do it here
@@ -72,8 +72,8 @@ psrare <- rarefy_even_depth(psfilter, rngseed = 8675309, sample.size = 10000, ve
 ps_dist_jacc <- phyloseq::distance(psrare, method = "jaccard", normalized = TRUE, binary = TRUE)
 ps_dist_bray <- phyloseq::distance(psrare, method = "bray")
 
-ps_ord_jacc <- ordinate(ps, "PCoA", distance = ps_dist_jacc)
-ps_ord_bray <- ordinate(ps, "PCoA", distance = ps_dist_bray)
+ps_ord_jacc <- ordinate(psrare, "PCoA", distance = ps_dist_jacc)
+ps_ord_bray <- ordinate(psrare, "PCoA", distance = ps_dist_bray)
 
 plot_scree(ps_ord_jacc)
 plot_scree(ps_ord_bray)
@@ -109,7 +109,7 @@ message(paste0("\t The first dimention explains ", PC1,"% of the variance, \n",
 df <- cbind(sample_data(psrare), ps_ord_bray$vectors)
 df
 
-p <- ggplot(df, aes(x = Axis.1, y = Axis.2, color = Loc_name))
+p <- ggplot(df, aes(x = Axis.1, y = Axis.2, color = Env_biome))
 p <- p + geom_point(aes (size = 3, alpha = 0.75))
 # p <- p +  scale_shape_manual(name = "Genotype", values = Genotype_shape_pal)
 p <- p + scale_fill_manual(name = "Loc_name", values = Sample_color_pal)
@@ -126,7 +126,7 @@ p
 dfJ <- cbind(sample_data(psrare), ps_ord_jacc$vectors)
 dfJ
 
-p <- ggplot(dfJ, aes(x = Axis.1, y = Axis.2, color = Loc_name))
+p <- ggplot(dfJ, aes(x = Axis.1, y = Axis.2, color = Env_biome))
 p <- p + geom_point(aes (size = 3, alpha = 0.75))
 # p <- p +  scale_shape_manual(name = "Genotype", values = Genotype_shape_pal)
 p <- p + scale_fill_manual(name = "Loc_name", values = Sample_color_pal)
