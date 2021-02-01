@@ -1,0 +1,171 @@
+---
+title: "Aguadilla_Anoles"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<br>
+
+``` {r, echo = T, eval = T}
+# set seed
+set.seed(8675309)
+
+#definitely load packages
+library(phyloseq)
+library(ggplot2)
+library(reshape2)
+library(vegan)
+
+
+
+#I don't know if this package stuff works
+# list pacakges
+packages <- c("ggplot2", 
+              "reshape2", 
+              "vegan",
+              "phyloseq")
+
+# install packages from bioconductor
+BiocManager::install(setdiff(packages,installed.packages()), update = FALSE)
+
+
+# load packages
+all_packages <- c(packages)
+
+
+# set the plotting theme 
+theme_set(theme_bw())
+
+```
+
+
+
+
+
+``` {r, echo = T, eval = T}
+# select colors for graphing
+
+Sample_color_pal <- c("#1c78e8","#1c78e8","#1c78e8","#1c78e8","#1c78e8","#1c78e8","#1c78e8","#1c78e8","#1c78e8","#ebcd09","#ebcd09","#ebcd09","#ebcd09","#ebcd09","#ebcd09","#ebcd09","#ebcd09","#ebcd09","#ebcd09")
+names(Sample_color_pal) <- c("AF104", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_forest", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban", "Mayaguez_urban")
+
+Sample_color_pal <- c("#1c78e8","#ebcd09")
+names(Sample_color_pal) <- c("Aguadilla_forest","Aguadilla_urban")
+Sample_color_pal
+```
+
+
+``` {r, echo = T, eval = T}
+
+
+# Rarefy
+psrare <- rarefy_even_depth(ps, rngseed = 8675309, sample.size = 10000, verbose = FALSE)
+
+
+# if you want to remove certain sample or taxa from the dataset, you can do it here
+# psrare <- subset_samples(psrare, Inoculum %in% c("MpahFL1", "Input_Mpah", "Input_FL1"))
+# psrare <- prune_taxa(taxa_sums(psrare) > 0, ps)
+# psrare
+
+ps_dist_jacc <- phyloseq::distance(psrare, method = "jaccard", normalized = TRUE, binary = TRUE)
+ps_dist_bray <- phyloseq::distance(psrare, method = "bray")
+
+ps_ord_jacc <- ordinate(ps, "PCoA", distance = ps_dist_jacc)
+ps_ord_bray <- ordinate(ps, "PCoA", distance = ps_dist_bray)
+
+plot_scree(ps_ord_jacc)
+plot_scree(ps_ord_bray)
+
+```
+
+``` {r, echo = T, eval = T}
+
+# Need to rerun these chunks when you switch between beta diversity methods
+
+PC1 <- round(ps_ord_jacc$values$Relative_eig[1]*100, 1)
+PC2 <- round(ps_ord_jacc$values$Relative_eig[2]*100, 1)
+PC3 <- round(ps_ord_jacc$values$Relative_eig[3]*100, 1)
+PC4 <- round(ps_ord_jacc$values$Relative_eig[4]*100, 1)
+message(paste0("\t The first dimention explains ", PC1,"% of the variance, \n",
+               "\t the top 2 dimentions explain ", PC1 + PC2,"% of the variance, \n",
+               "\t the top 3 dimentions explain ", PC1 + PC2 + PC3,"% of the variance, \n",
+               "\t and the top 4 dimentions explain ", PC1 + PC2 + PC3 + PC4,"% of the variance."))
+
+
+PC1 <- round(ps_ord_bray$values$Relative_eig[1]*100, 1)
+PC2 <- round(ps_ord_bray$values$Relative_eig[2]*100, 1)
+PC3 <- round(ps_ord_bray$values$Relative_eig[3]*100, 1)
+PC4 <- round(ps_ord_bray$values$Relative_eig[4]*100, 1)
+message(paste0("\t The first dimention explains ", PC1,"% of the variance, \n",
+               "\t the top 2 dimentions explain ", PC1 + PC2,"% of the variance, \n",
+               "\t the top 3 dimentions explain ", PC1 + PC2 + PC3,"% of the variance, \n",
+               "\t and the top 4 dimentions explain ", PC1 + PC2 + PC3 + PC4,"% of the variance."))
+
+
+```
+
+``` {r, echo = T, eval = T}
+
+df <- cbind(sample_data(psrare), ps_ord_bray$vectors)
+df
+
+p <- ggplot(df, aes(x = Axis.1, y = Axis.2, color = Loc_name))
+p <- p + geom_point(aes (size = 3, alpha = 0.75))
+# p <- p +  scale_shape_manual(name = "Genotype", values = Genotype_shape_pal)
+p <- p + scale_fill_manual(name = "Loc_name", values = Sample_color_pal)
+p <- p + xlab(paste0("PC1 (", PC1, "%)"))
+p <- p + ylab(paste0("PC2 (", PC2, "%)"))
+p <- p + coord_fixed(sqrt(PC2 / PC1))  # scales the plot to reflect the relative contributions of the PCs 
+p <- p + guides(fill = guide_legend(override.aes = list(shape = 21))) # make legend shapes all circles
+# p <- p + ggtitle("Jaccard")
+p
+
+
+
+
+dfJ <- cbind(sample_data(psrare), ps_ord_jacc$vectors)
+dfJ
+
+p <- ggplot(dfJ, aes(x = Axis.1, y = Axis.2, color = Loc_name))
+p <- p + geom_point(aes (size = 3, alpha = 0.75))
+# p <- p +  scale_shape_manual(name = "Genotype", values = Genotype_shape_pal)
+p <- p + scale_fill_manual(name = "Loc_name", values = Sample_color_pal)
+p <- p + xlab(paste0("PC1 (", PC1, "%)"))
+p <- p + ylab(paste0("PC2 (", PC2, "%)"))
+p <- p + coord_fixed(sqrt(PC2 / PC1))  # scales the plot to reflect the relative contributions of the PCs 
+p <- p + guides(fill = guide_legend(override.aes = list(shape = 21))) # make legend shapes all circles
+# p <- p + ggtitle("Jaccard")
+p
+```
+
+
+
+``` {r, echo = T, eval = T}
+
+
+
+# Adonis test permnova
+
+adonis(ps_dist_jacc ~ Env_biome, data = dfJ)
+adonis(ps_dist_bray ~ Env_biome, data = df)
+```
+
+``` {r, echo = T, eval = T}
+# filtrer out AF107
+
+psfilter <- subset_samples(ps, Sample %in% c("AF104", "AF105", "AF106", "AF108", "AF109", "AF110", "AF111", "AF112", "AF113", "AF114", "AF115", "AF116", "AF117", "AF118", "AF119", "AF120", "AF121", "AF122"))
+
+ps
+
+```
+
+
+
+
+
+
+
+
+
